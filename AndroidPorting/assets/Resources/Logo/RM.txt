@@ -1,0 +1,21 @@
+#Models: 1
+ID 0
+FILE Models/FullScene.nfg
+
+#2D Textures: 1
+ID 0
+FILE Textures/Logo.tga
+TILING REPEAT
+
+#Cube Textures: 0
+
+#Font Textures: 0
+
+#Shaders: 1
+ID 0
+VS Shaders/basic.vs
+FS Shaders/basic.fs
+
+#Configs: 1
+ID 0
+FILE Menu/Logo.txt

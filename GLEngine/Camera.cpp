@@ -3,35 +3,55 @@
 #include "../Utilities/Timer.h"
 #include "../Utilities/Vector4.h"
 #include "../Utilities/Utilities.h"
+#include "Application.h"
 
 Camera::Camera()
 {
 	mSpeed = 5.0f * Timer::FrameTime();
-	mNearPlane = 0.1f;
+	mNearPlane = 0.0f;
 	mFarPlane = 100.0f;
-	mAspect = (float) 1.0f;
+	mAspect = (float) Application::getInstance()->getScreenWidth() 
+		/ Application::getInstance()->getScreenHeight();
 	mFovy = 1.0f;
 
-	mObject3D = true;
+	mObject3D = false;
 
-	mPosition = CAMERA_POSITION_FRONT;
-	mRotation = CAMERA_ROTATION_FRONT;
+	mPosition.y = 8.0f;
+	mPosition.z = 3.0f;
+	mPosition.x = 0.5f;
+	mRotation.x = -0.5f;
 }
 
 void Camera::init()
 {
-	//glClearColor(0.0f, 0.5f, 1.0f, 1.0f);
-	mObject3D ? calcProjection3D(): calcProjection2D();
-	calcViewMatrix();
-	mCameraMatrix = mProjection * mViewMatrix;
+	if (mObject3D) 
+	{
+		calcProjection3D();
+		calcViewMatrix();
+		mCameraMatrix = mProjection * mViewMatrix;
+	}
+	else
+	{
+		calcProjection2D();
+		mCameraMatrix = mProjection;
+	}
 }
 
 void Camera::update()
 {
 	fullMove();
-	mObject3D ? calcProjection3D(): calcProjection2D();
-	calcViewMatrix();
-	mCameraMatrix = mProjection * mViewMatrix;
+	if (mObject3D) 
+	{
+		calcProjection3D();
+		calcViewMatrix();
+		mCameraMatrix = mProjection * mViewMatrix;
+	}
+	else
+	{
+		calcProjection2D();
+		mViewMatrix.SetIdentity();
+		mCameraMatrix = mProjection * mViewMatrix;
+	}
 }
 
 void Camera::calcViewMatrix()
@@ -56,7 +76,7 @@ void Camera::calcProjection3D()
 
 void Camera::calcProjection2D()
 {
-	mProjection.SetOrtho(-1, 1, -1, 1, mNearPlane, mFarPlane);
+	mProjection.SetOrtho(-1, 1, -1, 1, 0.1f, 100.0f);
 }
 
 void Camera::calcWorldMatrix() {
@@ -157,15 +177,17 @@ void Camera::rotate(CameraControl direction, float angle)
 
 void Camera::mouseRotate()
 {
+	/*
 	InputManager* inputManager = InputManager::getInstance();
 	if(!inputManager->hasTouch(TOUCH_DRAG))
 	{
 		return;
 	}
 	TouchData touchData = inputManager->getTouchData();
-	rotate(CAMERA_ROTATE_RIGHT, DEGREES_TO_RADIANS(touchData.dentalX) / 5.0f);
-	rotate(CAMERA_ROTATE_DOWN, DEGREES_TO_RADIANS(touchData.dentalY) / 5.0f);
+	//rotate(CAMERA_ROTATE_RIGHT, DEGREES_TO_RADIANS(touchData.dentalX) / 5.0f);
+	//rotate(CAMERA_ROTATE_DOWN, DEGREES_TO_RADIANS(touchData.dentalY) / 5.0f);
 	inputManager->clearTouchState();
+	*/
 }
 
 void Camera::fullMove()
@@ -173,7 +195,7 @@ void Camera::fullMove()
 	move();
 	rotate();
 	mouseRotate();
-	changeCamera();
+	//changeCamera();
 }
 
 void Camera::changeCamera()
@@ -185,11 +207,11 @@ void Camera::changeCamera()
 
 	if ( checkMode )
 	{
-		changeViewTime(CAMERA_POSITION_FRONT, CAMERA_ROTATION_FRONT, 30);
+		changeViewTime(CAMERA_POSITION_FRONT, CAMERA_ROTATION_FRONT, 60);
 	}
 	else
 	{
-		changeViewTime(CAMERA_POSITION_UP, CAMERA_ROTATION_UP, 30);
+		changeViewTime(CAMERA_POSITION_UP, CAMERA_ROTATION_UP, 60);
 	}
 }
 
@@ -219,32 +241,4 @@ void Camera::setObjectType(bool type)
 	mObject3D = type;
 	update();
 }
-
-bool Camera::isUp()
-{
-	Matrix thu;
-	float alpha = 1.0f;
-	Vector3 checkPosition = CAMERA_POSITION_UP;
-	if ( (mPosition.x >= checkPosition.x - alpha) && (mPosition.x <= checkPosition.x + alpha)
-		&& (mPosition.y >= checkPosition.y - alpha) && (mPosition.y <= checkPosition.y + alpha)
-		&& (mPosition.z >= checkPosition.z - alpha) && (mPosition.z <= checkPosition.z + alpha))
-	{
-		return true;
-	}
-	return false;
-}
-
-bool Camera::isFront()
-{
-	float alpha = 1.0f;
-	Vector3 checkPosition = CAMERA_POSITION_FRONT;
-	if ( (mPosition.x >= checkPosition.x - alpha) && (mPosition.x <= checkPosition.x + alpha)
-		&& (mPosition.y >= checkPosition.y - alpha) && (mPosition.y <= checkPosition.y + alpha)
-		&& (mPosition.z >= checkPosition.z - alpha) && (mPosition.z <= checkPosition.z + alpha))
-	{
-		return true;
-	}
-	return false;
-}
-
 Camera::~Camera(){}

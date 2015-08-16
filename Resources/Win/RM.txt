@@ -1,0 +1,23 @@
+#Models: 1
+ID 0
+FILE Models/chest2.got
+
+#2D Textures: 1
+ID 0
+FILE Textures/chest.tga
+TILING REPEAT
+
+#Cube Textures: 0
+
+#Font Textures: 0
+
+#Shaders: 1
+ID 0
+VS Shaders/basic.vs
+FS Shaders/basic.fs
+STATES 1
+STATE DEPTH_TEST
+
+#Configs: 1
+ID 0
+FILE Menu/Map.txt

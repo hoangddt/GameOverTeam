@@ -50,7 +50,7 @@
 				PrecompiledHeaderFile=" _CRT_SECURE_NO_WARNINGS"
 				WarningLevel="3"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4996;4018"
+				DisableSpecificWarnings="4996;4018;4244"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -181,6 +181,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArrowObject.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Button.cpp"
 				>
 			</File>
@@ -189,7 +193,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Camera2D.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Control2D.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ControlButton.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\EnemyManager.cpp"
 				>
 			</File>
 			<File
@@ -197,11 +213,43 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Game2DObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameData.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameLogoStage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameMainMenuStage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameMapStage.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\GameObject.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\GamePlayingState1.cpp"
+				RelativePath=".\GamePlayingStage1.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GamePlayingStage2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GamePlayingStage3.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GameWinStage.cpp"
 				>
 			</File>
 			<File
@@ -213,6 +261,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Lib.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LoadingScreen.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\main.cpp"
 				>
 			</File>
@@ -221,11 +277,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MapBox.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MapObject.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Model.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MonsterEnemy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PlayingStageDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PopUpMenu.cpp"
 				>
 			</File>
 			<File
@@ -238,6 +310,22 @@
 			</File>
 			<File
 				RelativePath=".\Shader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SoundManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StageBase.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StageInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\StageManager.cpp"
 				>
 			</File>
 			<File
@@ -259,6 +347,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArrowObject.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Button.h"
 				>
 			</File>
@@ -267,7 +359,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Camera2D.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Control2D.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ControlButton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\EnemyManager.h"
 				>
 			</File>
 			<File
@@ -275,11 +379,43 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Game2DObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameData.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameLogoStage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameMainMenuStage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameMapStage.h"
+				>
+			</File>
+			<File
 				RelativePath=".\GameObject.h"
 				>
 			</File>
 			<File
-				RelativePath=".\GamePlayingState1.h"
+				RelativePath=".\GamePlayingStage1.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GamePlayingStage2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GamePlayingStage3.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GameWinStage.h"
 				>
 			</File>
 			<File
@@ -299,7 +435,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\LoadingScreen.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LogHeaderAndroid.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Map.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MapBox.h"
 				>
 			</File>
 			<File
@@ -308,6 +456,22 @@
 			</File>
 			<File
 				RelativePath=".\Model.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MonsterEnemy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\OpenGLES2Header.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PlayingStageDrawer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PopUpMenu.h"
 				>
 			</File>
 			<File
@@ -320,6 +484,22 @@
 			</File>
 			<File
 				RelativePath=".\Shader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SoundManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StageBase.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StageInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\StageManager.h"
 				>
 			</File>
 			<File

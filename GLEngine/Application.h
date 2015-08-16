@@ -1,9 +1,11 @@
 #pragma once
+#include "StageManager.h"
 
 class Application
 {
 private:
 	static Application* mpInstance;
+	StageManager* mStageManager;
 	Application(){}
 	Application(const Application &){} 
 	Application& operator =(const Application &){}
@@ -13,9 +15,11 @@ private:
 public:
 	static Application* getInstance();
 	static void destroyInstance();
+	static void call_exit();
 	void init(unsigned int screenWidth, unsigned int screenHeight);
 	void render();
 	void update();
+	void pause();
 	void destroy();
 	unsigned int getScreenWidth();
 	unsigned int getScreenHeight();

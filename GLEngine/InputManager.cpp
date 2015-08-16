@@ -1,7 +1,7 @@
 #include "InputManager.h"
 #include "../Utilities/Utilities.h"
-#include "KeyBuffer.h"
 #include "Lib.h"
+#include "LogHeaderAndroid.h"
 
 InputManager* InputManager::mInstance = NULL;
 
@@ -77,19 +77,22 @@ TouchData InputManager::getTouchData()
 
 void InputManager::clearTouchState()
 {
-	mMouseState = MOUSE_NONE;
+	//mMouseState = MOUSE_NONE;
 }
 
 void InputManager::init()
 {
+	printf("InputManager::init() is called\n");
 	mMouseState = MOUSE_NONE;
 	mMouseX = 0;
 	mMouseY = 0;
 	mOldMouseX = 0;
 	mOldMouseY = 0;
 	mpKeyBuffer = new KeyBuffer(255);
+#if WIN32
 	RegisterKeyFunc(InputManager::onKeyEvent);
-	RegisterMouseFunc(InputManager::onMouseEvent);
+	RegisterMouseFunc(InputManager::onMouseEvent);	
+#endif
 }
 
 InputManager::~InputManager(void)

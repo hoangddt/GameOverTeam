@@ -3,6 +3,7 @@
 #include "Lib.h"
 #include <string.h>
 #include "FileManager.h"
+#include "LogHeaderAndroid.h"
 
 void Texture::initCubetex(const char* img_data, int width, int height, int bpp) const
 {
@@ -80,14 +81,31 @@ void Texture::init(const char* path)
 {
 	glGenTextures(1, &mTextureId);
 	glBindTexture(mTextureMode, mTextureId);
+	
 	int width = 0;
 	int height = 0;
 	int bpp = 0;
-	FileManager* fileManager = FileManager::getInstance();
-	const char* filePath = fileManager->combineWithRoot(path);
-	char* imgData = LoadTGA(filePath, width, height, bpp);
-	delete[] filePath;
-	GLenum format = bpp == 24 ? GL_RGB : GL_RGBA;
+	const char* imgData;
+	GLenum format;
+
+	if(path != NULL)
+	{
+		FileManager* fileManager = FileManager::getInstance();
+		const char* filePath = fileManager->combineWithRoot(path);
+		
+		imgData = LoadTGA(filePath, width, height, bpp);
+		delete[] filePath;
+		format = bpp == 24 ? GL_RGB : GL_RGBA;
+	}
+	else
+	{
+		imgData = mBuffer;
+		width = mImageWidth;
+		height = mImageHeight;
+		format = GL_RGBA;
+		bpp = 32;
+	}
+
 	// load texture 2D
 	if(mTextureMode == GL_TEXTURE_2D)
 	{
@@ -98,7 +116,14 @@ void Texture::init(const char* path)
 	{
 		initCubetex(imgData, width, height, bpp);
 	}
-	delete[] imgData;
+	if(path != NULL)
+	{
+		delete[] imgData;
+	}
+	else
+	{
+		SAFE_FREE(mBuffer);
+	}
 
 	glTexParameteri(mTextureMode, GL_TEXTURE_WRAP_S, mTiling);
 	glTexParameteri(mTextureMode, GL_TEXTURE_WRAP_T, mTiling);
@@ -113,7 +138,7 @@ void Texture::init()
 	init(mPath);
 }
 
-Texture::Texture(bool is2DTexture, const char* path)
+Texture::Texture(bool is2DTexture, const char* path, GLenum tiling)
 {	
 	mTextureMode = is2DTexture ? GL_TEXTURE_2D : GL_TEXTURE_CUBE_MAP;
 	if(path != NULL)
@@ -125,6 +150,23 @@ Texture::Texture(bool is2DTexture, const char* path)
 	{
 		this->mPath = NULL;
 	}
+	this->mTiling = tiling;
+	mBuffer = NULL;
+}
+
+Texture::Texture(const char* buffer, int imageWidth, int imageHeight)
+{
+	int len = imageWidth * imageHeight * 4;// support only 32bits image
+	mBuffer = new char[len];
+	for(int i = 0; i < len; i++)
+	{
+		mBuffer[i] = buffer[i];
+	}
+	mImageWidth = imageWidth;
+	mImageHeight = imageHeight;
+	mTextureMode = GL_TEXTURE_2D;
+	mPath = NULL;
+	mTiling = GL_CLAMP_TO_EDGE;
 }
 
 GLenum Texture::getTilingByString(const char* tilingStr)
@@ -152,6 +194,8 @@ GLenum Texture::getTilingByString(const char* tilingStr)
 
 Texture::~Texture(void)
 {
-	glDeleteBuffers(1, &mTextureId);
+	glBindTexture(mTextureMode, 0);
+	glDeleteTextures(1, &mTextureId);
 	FREE_1D_ARRAY(mPath);
+	FREE_1D_ARRAY(mBuffer);
 }

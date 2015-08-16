@@ -1,6 +1,7 @@
 #include "ResourceManager.h"
 #include "Lib.h"
 #include <stdio.h>
+#include "LogHeaderAndroid.h"
 
 ResourceManager* ResourceManager::mpInstance = NULL;
 ResourceManager::ResourceManager(void)
@@ -9,8 +10,22 @@ ResourceManager::ResourceManager(void)
 	mpTextures = NULL;
 	mpCubetexs = NULL;
 	mpShaders = NULL;
-	mCountOfModels = mCountOfTextures = 0;
-	mCountOfCubetexs = mCountOfShaders = 0;
+	mpConfigs = NULL;
+
+	mCountOfModels = 0;
+	mCountOfLoadedModels = 0;
+
+	mCountOfTextures = 0;
+	mCountOfLoadedTextures = 0;
+
+	mCountOfCubetexs = 0;
+	mCountOfLoadedCubetexs = 0;
+
+	mCountOfFontTexs = 0;
+	mCountOfLoadedFontTexs = 0;
+
+	mCountOfShaders = 0;
+	mCountOfLoadedShaders = 0;
 }
 ResourceManager::~ResourceManager(void)
 {
@@ -18,6 +33,8 @@ ResourceManager::~ResourceManager(void)
 	FREE_2D_ARRAY(mpTextures, mCountOfTextures);
 	FREE_2D_ARRAY(mpShaders, mCountOfShaders);
 	FREE_2D_ARRAY(mpCubetexs, mCountOfCubetexs);
+	FREE_2D_ARRAY(mpFontTexs, mCountOfFontTexs);
+	FREE_2D_ARRAY(mpConfigs, mCountOfConfigs);
 }
 
 ResourceManager* ResourceManager::getInstance()
@@ -32,13 +49,50 @@ void ResourceManager::destroyInstance()
 }
 
 /*-----  Definition public method  ------*/
+bool ResourceManager::loadNext()
+{
+	if(mCountOfLoadedModels < mCountOfModels)
+	{
+		mpModels[mCountOfLoadedModels++]->init();
+		return true;
+	}
+	if(mCountOfLoadedTextures < mCountOfTextures)
+	{
+		mpTextures[mCountOfLoadedTextures++]->init();
+		return true;
+	}
+	if(mCountOfLoadedCubetexs < mCountOfCubetexs)
+	{
+		mpCubetexs[mCountOfLoadedCubetexs++]->init();
+		return true;
+	}
+	if(mCountOfLoadedFontTexs < mCountOfFontTexs)
+	{
+		mpFontTexs[mCountOfLoadedFontTexs++]->init();
+		return true;
+	}
+	if(mCountOfLoadedShaders < mCountOfShaders)
+	{
+		mpShaders[mCountOfLoadedShaders++]->init();
+		return true;
+	}
+	return false;
+}
+
 void ResourceManager::init(const char* rmFile)
 {
 	FILE *fp = FileManager::getInstance()->openFile(rmFile, "r");
 	initModels(fp);
+	fscanf(fp, "\n");
 	initTextures(fp);
+	fscanf(fp, "\n");
 	initCubetexs(fp);
+	fscanf(fp, "\n");
+	initFontTexs(fp);
+	fscanf(fp, "\n");
 	initShaders(fp);
+	fscanf(fp, "\n");
+	initConfigs(fp);
 	FileManager::getInstance()->closeFile(fp);
 }
 
@@ -90,111 +144,157 @@ Texture* ResourceManager::getCubetexById(uint id)
 		return NULL;
 	}
 }
+
+const char* ResourceManager::getConfigById(uint id)
+{
+	if (id >= 0 && id < mCountOfConfigs)
+	{
+		return mpConfigs[id];
+	}
+	else
+	{
+		printf("Error: Invalid menu config id: %d\n", id);
+		return NULL;
+	}
+}
+
+Texture* ResourceManager::getFontTexById(uint id)
+{
+	if (id >= 0 && id < mCountOfFontTexs)
+	{
+		return mpFontTexs[id];
+	}
+	else
+	{
+		printf("Error: Invalid Font Textures id: %d\n", id);
+		return NULL;
+	}
+}
+
 uint ResourceManager::getCountOfModels() const
 {
 	return mCountOfModels;
 }
+
 uint ResourceManager::getCountOfShaders() const
 {
 	return mCountOfShaders;
 }
+
 uint ResourceManager::getCountOfTextures() const
 {
 	return mCountOfTextures;
 }
+
+uint ResourceManager::getCountOfFontTexs() const
+{
+	return mCountOfFontTexs;
+}
+
 uint ResourceManager::getCountOfCubetexs() const
 {
 	return mCountOfCubetexs;
 }
 
+uint ResourceManager::getCountOfConfigs() const
+{
+	return mCountOfConfigs;
+}
+
+uint ResourceManager::getCountOfElements() const
+{
+	return mCountOfModels + mCountOfShaders + 
+		mCountOfTextures + mCountOfFontTexs + 
+		mCountOfCubetexs;
+}
+
+uint ResourceManager::getCountOfLoaded() const
+{
+	return mCountOfLoadedModels + mCountOfLoadedTextures +
+		mCountOfLoadedCubetexs + mCountOfLoadedFontTexs +
+		mCountOfLoadedShaders;
+}
 
 /*-----  Definition private method  ------*/
 void ResourceManager::initModels(FILE* ptr_f)
 {
-	// Read and create Model
-	fscanf(ptr_f, "#Models: %d\n", &mCountOfModels);
-
-	
+	//float countFloat;
+	fscanf(ptr_f, "#Models: %u\n", &mCountOfModels);
+	printf("#Models: %u\n", mCountOfModels);
+	//char mystring[100];
+	//fgets(mystring, 100, ptr_f);
+	//printf("Whole line: %s\n", mystring);
 	mpModels = new Model*[mCountOfModels];
+	int index;
+	char* path = new char[70];
 	for (int i = 0; i < mCountOfModels; ++i)
 	{
-		int index;
-		char* path = new char[50];
-		
 		fscanf(ptr_f, "ID %d\n", &index);
 		fscanf(ptr_f, "FILE %s\n", path);
-		
-
-		Model *tempModel = new Model();
-		tempModel->init(path);
-
-
-		mpModels[index] = tempModel;
-		delete[] path;
-		// system("pause");
+		printf("ID: %d and %s\n", index, path);
+		mpModels[index] = new Model(path);
 	}
-
-	fscanf(ptr_f, "\n");
+	delete[] path;
 }
+
 void ResourceManager::initTextures(FILE* ptr_f)
 {
-	// read and create 2D Texture
-	fscanf(ptr_f, "#2D Textures: %d\n", &mCountOfTextures);
+	fscanf(ptr_f, "#2D Textures: %u\n", &mCountOfTextures);
+	printf("#2DTextures: %u\n", mCountOfTextures);
 
 	mpTextures = new Texture*[mCountOfTextures];
+	int index;
+	char *path = new char[70];
+	char *type = new char[20];
 	for (int i = 0; i < mCountOfTextures; ++i)
 	{
-		int index;
-		char *path = new char[50];
-		char *type = new char[50];
-
 		fscanf(ptr_f, "ID %d\n", &index);
 		fscanf(ptr_f, "FILE %s\n", path);
 		fscanf(ptr_f, "TILING %s\n", type);
-
+		printf("ID: %d FILE: %s TILING: %s\n", index, path, type);
 		GLuint tiling = Texture::getTilingByString(type);
-		Texture *tempTexture = new Texture(true, path);
-		tempTexture->init();
-		tempTexture->mTiling = tiling;
-		mpTextures[index] = tempTexture;
-
-		delete[] path;
-		delete[] type;
-		// system("pause");
+		mpTextures[index] = new Texture(true, path, tiling);
 	}
-
-	fscanf(ptr_f, "\n");
+	delete[] path;
+	delete[] type;
 }
+
+void ResourceManager::initFontTexs(FILE* ptr_f)
+{
+	fscanf(ptr_f, "#Font Textures: %d\n", &mCountOfFontTexs);
+
+	mpFontTexs = new Texture* [mCountOfFontTexs];
+	int index;
+	char *path = new char[50];
+	for (int i = 0; i < mCountOfFontTexs; ++i)
+	{
+		fscanf(ptr_f, "ID %d\n", &index);
+		fscanf(ptr_f, "FILE %s\n", path);
+		mpFontTexs[index] = new Texture(true, path, GL_REPEAT);
+	}
+	delete[] path;
+}
+
 void ResourceManager::initCubetexs(FILE* ptr_f)
 {
 	// read and create Cube Texture
 	fscanf(ptr_f, "#Cube Textures: %d\n", &mCountOfCubetexs);
 
-	
 	mpCubetexs = new Texture*[mCountOfCubetexs];
+	int index;
+	char *path = new char[70];
+	char *type = new char[20];
 	for (int i = 0; i < mCountOfCubetexs; ++i)
 	{
-		int index;
-		char *path = new char[50];
-		char *type = new char[50];
-
 		fscanf(ptr_f, "ID %d\n", &index);
 		fscanf(ptr_f, "FILE %s\n", path);
 		fscanf(ptr_f, "TILING %s\n", type);
 
 		GLuint tiling = Texture::getTilingByString(type);
-		Texture *tempTexture = new Texture(false, path);
-		tempTexture->init();
-		tempTexture->mTiling = tiling;
-
-		mpCubetexs[index] = tempTexture;
-
-		delete[] path;
-		delete[] type;
-		// system("pause");
+		mpCubetexs[index] = new Texture(false, path, tiling);
 	}
-
-	fscanf(ptr_f, "\n");
+	delete[] path;
+	delete[] type;
 }
 void ResourceManager::initShaders(FILE* ptr_f)
 {
@@ -202,23 +302,18 @@ void ResourceManager::initShaders(FILE* ptr_f)
 	fscanf(ptr_f, "#Shaders: %d\n", &mCountOfShaders);
 
 	mpShaders = new Shader*[mCountOfShaders];
+	int index;
+	char *VSpath = new char[70];
+	char *FSpath = new char[70];
 	for (int i = 0; i < mCountOfShaders; ++i)
 	{
-		int index;
-		char *VSpath = new char[50];
-		char *FSpath = new char[50];
-
 		fscanf(ptr_f, "ID %d\n", &index);
 		fscanf(ptr_f, "VS %s\n", VSpath);
 		fscanf(ptr_f, "FS %s\n", FSpath);
 
-		Shader *tempShader = new Shader();
-		tempShader->init(VSpath, FSpath);
-
-
+		Shader *tempShader = new Shader(VSpath, FSpath);
 		int states;
 		fscanf(ptr_f, "STATES %d\n", &states);
-
 
 		for (int j = 0; j < states; ++j)
 		{
@@ -229,12 +324,30 @@ void ResourceManager::initShaders(FILE* ptr_f)
 			delete[] stateStr;
 		}
 
-		
-		
 		mpShaders[index] = tempShader;
-
-		delete[] VSpath;
-		delete[] FSpath;
-		// system("pause");
 	}
+	delete[] VSpath;
+	delete[] FSpath;
+}
+
+void ResourceManager::initConfigs(FILE* ptr_f)
+{
+	fscanf(ptr_f, "#Configs: %d\n", &mCountOfConfigs);
+
+	mpConfigs = new char* [mCountOfConfigs];
+
+	int id;
+	char *configFile = new char[70];
+
+	for (int i = 0; i < mCountOfConfigs; ++i)
+	{
+		fscanf(ptr_f, "ID %d\n", &id);
+		fscanf(ptr_f, "FILE %s\n", configFile);
+
+		int len = strlen(configFile);
+		mpConfigs[id] = new char[len + 1];
+		strcpy(mpConfigs[i], configFile);
+	}
+
+	delete[] configFile;
 }

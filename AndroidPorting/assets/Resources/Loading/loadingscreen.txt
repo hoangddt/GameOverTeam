@@ -1,0 +1,8 @@
+MODEL Models/FullScene.nfg
+TEXTURE
+BG_FILE Textures/Loading.tga
+PR_FILE Textures/LoadingFill.tga
+SHADER
+VS Shaders/basic.vs
+FS Shaders/basic.fs
+PROCESSBAR 92 388

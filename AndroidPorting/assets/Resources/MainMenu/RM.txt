@@ -1,0 +1,39 @@
+#Models: 1
+ID 0
+FILE Models/FullScene.nfg
+
+#2D Textures: 5
+ID 0
+FILE Textures/MainMenu.tga
+TILING REPEAT
+ID 1
+FILE Textures/SettingOn.tga
+TILING REPEAT
+ID 2
+FILE Textures/SettingOff.tga
+TILING REPEAT
+ID 3
+FILE Textures/Credit.tga
+TILING REPEAT
+ID 4
+FILE Textures/PopUpExit.tga
+TILING REPEAT
+
+#Cube Textures: 0
+
+#Font Textures: 0
+
+#Shaders: 1
+ID 0
+VS Shaders/basic.vs
+FS Shaders/basic.fs
+
+#Configs: 4
+ID 0
+FILE Menu/MainMenu.txt
+ID 1
+FILE Menu/Setting.txt
+ID 2
+FILE Menu/Credit.txt
+ID 3
+FILE Menu/PopUpExit.txt

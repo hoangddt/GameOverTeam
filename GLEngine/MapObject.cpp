@@ -2,6 +2,7 @@
 #include "ResourceManager.h"
 #include "SceneManager.h"
 #include "Map.h"
+#include "LogHeaderAndroid.h"
 
 void MapObject::render()
 {
@@ -9,7 +10,7 @@ void MapObject::render()
 	Camera* camera = SceneManager::getInstance()->mCamera;
 	for(int i = 0; i < n_objects; i++)
 	{
-		GameObject* obj = *(mpObjects + i);
+		MapBox* obj = *(mBoxs + i);
 		if(obj->isVisible())
 		{
 			obj->render(camera);
@@ -19,27 +20,59 @@ void MapObject::render()
 
 void MapObject::update()
 {
-	int n_objects = mRows * mCols;
-	for(int i = 0; i < n_objects; i++)
+	//bool set = false;
+	MapBox* obj;
+	if(mIsGameStarted && mIsSupportFalling)
 	{
-		GameObject* obj = *(mpObjects + i);
-		if(obj->isVisible())
+		if(mMap[mCurrentRowIndex][mCurrentColIndex])
 		{
-			obj->update();
+			obj = getCurBox();
+			if(obj->getState() != MAP_BOX_DANGER)
+			{
+				obj->setState(MAP_BOX_DANGER);
+				obj->startFallingEffect();
+			}
+		}
+	}
+	for(int i = mRows - 1; i > -1; i--)
+	{
+		for(int j = mCols - 1; j > -1; j--)
+		{
+			obj = *(mBoxs + i * mCols + j);
+			if(obj->isVisible())
+			{
+				/*
+				if(mIsGameStarted && mIsSupportFalling && !set)
+				{
+					
+					if(mMap[i][j])
+					{
+						if(obj->getState() != MAP_BOX_DANGER)
+						{
+							obj->setState(MAP_BOX_DANGER);
+							obj->startFallingEffect();
+						}
+						set = true;
+					}
+					
+				}
+				*/
+				obj->update();
+			}
 		}
 	}
 }
 
 void MapObject::updateObjectsPosition()
 {
-	float width = (*mpObjects)->getActualWidth();
-	float height = (*mpObjects)->getActualHeight();
-	
+	float width = (*mBoxs)->getActualWidth();
+	float height = (*mBoxs)->getActualHeight();
+
 	float wDental = width / 2;
 	float hDental = height / 2;
 	float wMapDental = mCols * wDental;
 	float hMapDental = mRows * hDental;
-	
+
 	//float wDental = (width / 2.0f) * (float)(1 - mRows);
 	//float hDental = (height / 2.0f) * (1 - mCols);
 
@@ -47,7 +80,7 @@ void MapObject::updateObjectsPosition()
 	{
 		for(int j = 0; j < mCols; j++)
 		{
-			GameObject* obj = *(mpObjects + i * mCols + j);
+			GameObject* obj = *(mBoxs + i * mCols + j);
 			obj->mPostion.y = mPosition.y;
 			obj->mPostion.x = mPosition.x + width * j + wDental - wMapDental;
 			//obj->mPostion.x = mPosition.x + width * j + wDental;
@@ -63,7 +96,7 @@ void MapObject::updateObjectsScaling()
 	{
 		for(int j = 0; j < mCols; j++)
 		{
-			GameObject* obj = *(mpObjects + i * mCols + j);
+			GameObject* obj = *(mBoxs + i * mCols + j);
 			obj->mScaling = mScaling;
 		}
 	}
@@ -72,35 +105,35 @@ void MapObject::updateObjectsScaling()
 
 void MapObject::applyNormalState()
 {
-	Texture* texutre;
+	MapBoxState state;
 	for(int i = 0; i < mRows; i++)
 	{
 		for(int j = 0; j < mCols; j++)
 		{
-			GameObject* obj = *(mpObjects + i * mCols + j);
-			if(i < mCurrentRow)
+			MapBox* obj = *(mBoxs + i * mCols + j);
+			if(i < mCurrentRowIndex)
 			{
-				texutre = mNormalTex;
+				state = MAP_BOX_NORMAL;
 			}
 			else
 			{
-				if(i == mCurrentRow)
+				if(i == mCurrentRowIndex)
 				{
-					if(j == mCurrentCol)
+					if(j == mCurrentColIndex)
 					{
-						texutre = mMap[i][j] ? mPathTex : mFailTex;
+						state = mMap[i][j] ? MAP_BOX_PATH : MAP_BOX_FAIL;
 					}
 					else
 					{
-						texutre = mNormalTex;
+						state = MAP_BOX_NORMAL;
 					}
 				}
 				else
 				{
-					texutre = mMap[i][j] ? mPathTex : mNormalTex;
+					state = mMap[i][j] ? MAP_BOX_PATH : MAP_BOX_NORMAL;
 				}
 			}
-			obj->setTexture(texutre);
+			obj->setState(state);
 		}
 	}
 }
@@ -111,9 +144,24 @@ void MapObject::applyShowPathState()
 	{
 		for(int j = 0; j < mCols; j++)
 		{
-			GameObject* obj = *(mpObjects + i * mCols + j);
-			Texture *texture = mMap[i][j] ? mPathTex : mNormalTex;
-			obj->setTexture(texture);
+			MapBox* obj = *(mBoxs + i * mCols + j);
+			MapBoxState state = mMap[i][j] ? MAP_BOX_PATH : MAP_BOX_NORMAL;
+			obj->setState(state);
+		}
+	}
+}
+
+void MapObject::applyHighlightPathState()
+{
+	for(int i = 0; i < mRows; i++)
+	{
+		for(int j = 0; j < mCols; j++)
+		{
+			MapBox* obj = *(mBoxs + i * mCols + j);
+			if(mMap[i][j])
+			{
+				obj->setState(MAP_BOX_PATH);
+			}
 		}
 	}
 }
@@ -129,81 +177,143 @@ void MapObject::setState(MapState state)
 	case MAP_SHOW_PATH:
 		applyShowPathState();
 		break;
+	case MAP_HIGHLIGHT_PATH:
+		applyHighlightPathState();
+		break;
 	}
 }
 
 bool MapObject::isValidPosition(uint row, uint col) const
 {
-	return mMap[row][col] ? true : false;
+	bool ret = mMap[row][col] ? true : false;
+	if(mIsSupportFalling)
+	{
+		MapBox* obj = *(mBoxs + row * mCols + col);
+		return ret && !(obj->isFalling() || obj->isFell());
+	}
+	return ret;
 }
 
 int MapObject::isValidCurPosition() const
 {
-	if(mCurrentRow >= mRows)
+	if(mCurrentRowIndex >= mRows)
 	{
 		return 0;
 	}
-	return mMap[mCurrentRow][mCurrentCol];
+	return mMap[mCurrentRowIndex][mCurrentColIndex];
 }
 
 void MapObject::setCharacterPosition(uint row, uint col)
 {
-	mCurrentRow = row;
-	mCurrentCol = col;
+	mCurrentRowIndex = row;
+	mCurrentColIndex = col;
 	setState(mState);
 }
 
 void MapObject::startGame()
 {
-	mCurrentRow--;
-	setCharacterPosition(mCurrentRow, mCurrentCol);
+	mCurrentRowIndex--;
+	setCharacterPosition(mCurrentRowIndex, mCurrentColIndex);
+	mIsGameStarted = true;
+}
+
+void MapObject::setSupportFalling(bool support)
+{
+	mIsSupportFalling = support;
 }
 
 Vector2 MapObject::getCurrentPosition() const
 {
-	Vector2 vec(mCurrentRow, mCurrentCol);
+	Vector2 vec(mCurrentRowIndex, mCurrentColIndex);
 	return vec;
 }
 
-MapObject::MapObject(const int** map, int row, int col, const GameObject* orginObject)
+MapBox* MapObject::getBox(uint row, uint col)
 {
+	if(row > mRows - 1 || col > mCols - 1)
+	{
+		return NULL;
+	}
+	return *(mBoxs + row * mCols + col);
+}
+
+MapBox* MapObject::getCurBox()
+{
+	return getBox(mCurrentRowIndex, mCurrentColIndex);
+}
+
+uint MapObject::getRows() const
+{
+	return mRows;
+}
+
+uint MapObject::getCols() const
+{
+	return mCols;
+}
+
+MapObject::MapObject(
+					 const int** map, 
+					 int row, 
+					 int col, 
+					 Model* model,
+					 Shader* shader,
+					 Texture* normalTex,
+					 Texture* pathTex,
+					 Texture* failTex,
+					 Texture* dangerTex,
+					 int dangerTimeout)
+{
+	mIsSupportFalling = false;
+	mIsGameStarted = false;
+
 	mRows = row;
 	mCols = col;
-	mpObjects = new GameObject* [row * col];
+	mBoxs = new MapBox* [row * col];
+
+	mPosition.z = -9.5;
+	mPosition.x = 0.5;
 	mScaling.x = mScaling.y = mScaling.z = 1;
 
 	Map::cloneMap(map, mMap, row, col);
-	
-	mCurrentRow = row;
+
+	mCurrentRowIndex = row;
 	for(int i = 0; i < col; i++)
 	{
 		if(map[row - 1][i])
 		{
-			mCurrentCol = i;
+			mCurrentColIndex = i;
 			break;
 		}
 	}
+
+	MapBox* orginBox = new MapBox(
+		model, 
+		shader,
+		normalTex,
+		pathTex,
+		failTex, 
+		dangerTex, 
+		dangerTimeout);
 
 	for(int i = 0; i < row; i++)
 	{
 		for(int j = 0; j < col; j++)
 		{
-			GameObject* obj = orginObject->clone();
+			MapBox* obj = dynamic_cast<MapBox *>(orginBox->clone());
 			obj->setVisible(true);
-			*(mpObjects + i * col + j) = obj;
+			*(mBoxs + i * col + j) = obj;
 		}
 	}
+	delete orginBox;
+
 	updateObjectsScaling();
-	ResourceManager* res = ResourceManager::getInstance();
-	mNormalTex = res->getTextureById(0);
-	mPathTex = res->getTextureById(1);
-	mFailTex = res->getTextureById(2);
 	setState(MAP_NORMAL);
 }
 
 MapObject::~MapObject(void)
 {
 	int size = mRows * mCols;
-	FREE_2D_ARRAY(mpObjects, size);
+	FREE_2D_ARRAY(mBoxs, size);
 	FREE_2D_ARRAY(mMap, mRows);
 }

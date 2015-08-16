@@ -8,6 +8,7 @@
 #include "Shader.h"
 #include "Vertex.h"
 #include "ResourceManager.h"
+#include "Lib.h"
 
 class GameObject
 {
@@ -20,6 +21,9 @@ protected:
 	int mCountOfCubetexs;
 	Matrix mWorldMatrix;
 	bool mIsVisible;
+	static float mGameTime;
+	static float mLastTime;
+	static float mFrameTime;
 
 	void calcWorldMatrix();
 	void useTextures();
@@ -27,6 +31,9 @@ protected:
 	void bindBuffers();// vertices and indices
 	void configShaderFields(const Matrix& finalMatrix);// attributes and uniforms
 	void drawAndFree();// draw triangles and bind buffers to zero
+
+	static bool isInBound(float point, float min, float max);
+	static bool isInBound(float objMin, float objMax, float min, float max);
 public:
 	Vector3 mPostion;
 	Vector3 mScaling;
@@ -36,8 +43,9 @@ public:
 	void setTexture(Texture* texture);
 	virtual void init();
 	virtual void update();
-	void render(Camera* camera);
-	void destroy();
+	virtual void render(Camera* camera);
+	virtual void destroy();
+	bool impactWith(const GameObject* obj, float vPadding = 0.0f, float hPadding = 0.0f) const;
 	GameObject(
 		int modelId,
 		int shaderId,
@@ -48,8 +56,9 @@ public:
 	GameObject();
 	virtual ~GameObject();
 	virtual GameObject* clone() const;
-	bool isVisible();
+	bool isVisible() const;
 	void setVisible(bool isVisible);
-	float getActualHeight();
-	float getActualWidth();
+	float getActualHeight() const;
+	float getActualWidth() const;
+	float getActualHeightY() const;
 };

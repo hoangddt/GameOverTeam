@@ -1,7 +1,8 @@
 #include "ControlButton.h"
 #include "SceneManager.h"
 #include "Application.h"
-
+#include "LogHeaderAndroid.h"
+#include <math.h>
 
 ControlButton* ControlButton::mInstance = NULL;
 
@@ -13,125 +14,99 @@ ControlButton* ControlButton::getInstance()
 }
 void ControlButton::destroyInstance()
 {
-	delete mInstance;
+	SAFE_FREE(mInstance);
 }
 
 ControlButton::ControlButton()
 {
-	mButtons = NULL;
-	mCountOfButtons = 0;
+	InputManager* input = InputManager::getInstance();
+	input->clearTouchState();
+	mTestClear = false;
+	mState = BUTTON_NONE;
 }
 
 ControlButton::~ControlButton()
 {
-	this->destroy();
 }
 
-void ControlButton::init()
+void ControlButton::clear()
 {
-	// Create 3 button
-	Button* originalButton = SceneManager::getInstance()->getControlButton();
-	mCountOfButtons = 3;
-	mButtons = new Button*[mCountOfButtons];
-
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		mButtons[i] = originalButton->clone();
-		// remove the statement below if meet error
-		mButtons[i]->init();
-	}
-
-	float angle = 15.0f;
-	// mButtons[0]->mRotation.z = -angle;
-	// mButtons[2]->mRotation.z = angle;
-
-}
-void ControlButton::update()
-{
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		mButtons[i]->update();
-	}
-}
-void ControlButton::render(Camera* camera)
-{
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		mButtons[i]->render(camera);
-	}
-}
-void ControlButton::destroy()
-{
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		delete mButtons[i];
-	}
-	delete mButtons;
+	InputManager* input = InputManager::getInstance();
+	input->clearTouchState();
+	mTestClear = false;
+	mState = BUTTON_NONE;
 }
 
-void ControlButton::setPosition(float x, float y, float z)
-{
-	// retrieve x, y, z
-	// All will have same y, z
-	// x will different for each elements
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		mButtons[i]->mPostion.y = y;
-		mButtons[i]->mPostion.z = z;
-	}
-	
-	int middle = mCountOfButtons / 2;
-	mButtons[middle]->mPostion.x = x;
-
-	float width = mButtons[middle]->getActualWidth();
-	
-	mButtons[middle-1]->mPostion.x = float ( x - width/2 - 0.2 * width );
-	mButtons[middle+1]->mPostion.x = float ( x + width/2 + 0.2 * width );
-}
-
-void ControlButton::setScaling(float x, float y, float z)
-{
-	for (int i = 0; i < mCountOfButtons; i++)
-	{
-		mButtons[i]->mScaling.x = x;
-		mButtons[i]->mScaling.y = y;
-		mButtons[i]->mScaling.z = z;
-	}
-}
-
-// return BUTTON_LEFT,	BUTTON_MIDDLE,	BUTTON_RIGHT, BUTTON_NONE
+// return BUTTON_LEFT,	BUTTON_MIDDLE,	BUTTON_RIGHT, BUTTON_NONE, BUTTON_UP
 ButtonState ControlButton::checkClick()
 {
 	InputManager* input = InputManager::getInstance();
-	if (input->hasTouch(TOUCH_DOWN))
+	static int checkDown = 0;
+	static TouchData downData;
+	static TouchData upData;
+	
+	if ( input->hasTouch(TOUCH_DOWN) )
 	{
-		TouchData touchData= input->getTouchData();
-		printf("Touch: %d  %d\n", touchData.x, touchData.y);
-		for (int i = 0; i < mCountOfButtons; i++)
+		//printf("DOWN\n");
+		downData = input->getTouchData();
+		checkDown = 1;
+		mState = BUTTON_NONE;
+	}
+	upData = input->getTouchData();
+	double xDistance, yDistance, distance;
+	
+	// Check slide
+	xDistance = upData.x - downData.x;
+	yDistance = upData.y - downData.y;
+	distance = sqrt( pow(xDistance, 2) + pow(yDistance, 2) );
+	if ( distance >= MAX_HANDLE && checkDown )
+	{
+		//printf("SLIDE\n");
+		checkDown = 0;
+		double alpha;
+		double tanAlpha;
+		tanAlpha = (double) (upData.x - downData.x) / (upData.y - downData.y);
+		alpha = atan(tanAlpha);
+
+		if ( downData.y <= upData.y )
 		{
-			if (mButtons[i]->containCoord(touchData.x, touchData.y))
+			if ( alpha > 0 )
 			{
-				switch (i)
-				{
-					case 0:
-						printf("BUTTON_LEFT\n");
-						return BUTTON_LEFT;
-					case 1:
-						printf("BUTTON_MIDDLE\n");
-						return BUTTON_MIDDLE;
-					case 2:
-						printf("BUTTON_RIGHT\n");
-						return BUTTON_RIGHT;
-					default:
-						printf("BUTTON_NONE\n");
-						return BUTTON_NONE;
-				}
+				mState = BUTTON_RIGHT;
+			}
+			else
+			{
+				mState = BUTTON_LEFT;
 			}
 		}
+		else
+		{
+			if ( (alpha <= ALPHA_MIDDLE) && (alpha >= -ALPHA_MIDDLE) )
+			{
+				mState = BUTTON_MIDDLE;
+			}
+			if ( alpha > ALPHA_MIDDLE ) 
+			{
+				mState = BUTTON_LEFT;
+			}
+			if ( alpha < -ALPHA_MIDDLE ) 
+			{
+				mState = BUTTON_RIGHT;
+			}
+		}
+		
+		if ( downData.y < upData.y - MAX_HANDLE / 5 )
+		{
+			//printf("NONE\n");
+			mState = BUTTON_NONE;
+		}
 	}
-	else
+	
+	// Check Click
+	if ( checkDown && input->hasTouch(TOUCH_UP) )
 	{
-		printf("else BUTTON_NONE\n");
-		return BUTTON_NONE;
+		checkDown = 0;
+		mState = BUTTON_UP;
 	}
+	return mState;
 }

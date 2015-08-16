@@ -1,0 +1,30 @@
+#Models: 1
+ID 0
+FILE Models/FullScene.nfg
+
+#2D Textures: 4
+ID 0
+FILE Textures/MapStage1.tga
+TILING REPEAT
+ID 1
+FILE Textures/MapStage2.tga
+TILING REPEAT
+ID 2
+FILE Textures/MapStage3.tga
+TILING REPEAT
+ID 3
+FILE Textures/MapStage4.tga
+TILING REPEAT
+
+#Cube Textures: 0
+
+#Font Textures: 0
+
+#Shaders: 1
+ID 0
+VS Shaders/basic.vs
+FS Shaders/basic.fs
+
+#Configs: 1
+ID 0
+FILE Menu/Map.txt

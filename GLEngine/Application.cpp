@@ -4,17 +4,26 @@
 #include "ResourceManager.h"
 #include "InputManager.h"
 #include "FileManager.h"
+#include "SoundManager.h"
 #include "Map.h"
 #include "../Utilities/Utilities.h"
+#include "LogHeaderAndroid.h"
+#include "Camera2D.h"
+#include "GameData.h"
 
+/*
+This code interact with Android, include:
+*  Setting Resource Path
+*  Call exit to close both Android and C++ app
+*  Init SoundManager class and set Sound path
+ */
 
-class Tester: ITouchListener
-{
-public:
-	virtual void touchPerformed()
-	{
-	}
-};
+#if ANDROID
+extern jobject globalActivity;
+extern JavaVM* jVM;
+#elif WIN32
+extern HWND hWnd;
+#endif
 
 Application* Application::mpInstance = NULL;
 
@@ -39,44 +48,57 @@ void Application::init(unsigned int screenWidth, unsigned int screenHeight)
 #ifdef WIN32
 	InitWindow(screenWidth, screenHeight);
 	FileManager::getInstance()->init("../Resources");
-#else
-	FileManager::getInstance()->init("/sdcard/Download/Res");
+#elif ANDROID
+	/*-----  Setting viewport  ------*/
+	glViewport(0, 0, screenWidth, screenHeight);
+	
+	/*-----  Setting resource path  ------*/
+	// For emulator
+	FileManager::getInstance()->init("/sdcard/Download/Resources");
+	// for inside phone memory : A QUang - A Hai
+	// FileManager::getInstance()->init("/storage/emulated/0/Download/Resources");
+	// for a Hoang
+	// FileManager::getInstance()->init("/storage/external_SD/Download/Resources");
+	
 #endif
 	InputManager::getInstance()->init();
-	ResourceManager::getInstance()->init("RM.txt");
-	SceneManager::getInstance()->init("SM.txt");
-	int n = 10;
-	int** map = Map::getInstance()->genMap(n, n);
-	SceneManager::getInstance()->genMapObject(map, n, n, SceneManager::getInstance()->mObjects[0]);
-	FREE_2D_ARRAY(map, n);
+	GameData::getInstance()->init("GameData/GameData.txt");
+	SoundManager::getInstance()->init("Sounds");
+	Camera2D::createInstance(screenWidth, screenHeight);
+	mStageManager = StageManager::getInstance();
+	mStageManager->setStage(STAGE_LOGO);
+	printf("Exiting Application::init()\n");
 }
 
 void Application::render()
 {
-	SceneManager::getInstance()->render();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	mStageManager->render();
 }
 
 void Application::update()
 {
-	SceneManager::getInstance()->update();
-	static int i = 0;
-	static int pos = 10;
-	if(InputManager::getInstance()->isKeyDown('C')){
-		i = 1;
-	}
-	if(InputManager::getInstance()->isKeyUp('C') && i == 1)
-	{
-		i = 0;
-		
-		SceneManager::getInstance()->mMapObject->setCharacterPosition(pos--, 5);
-	}
+	// int mode = GameData::getInstance()->getGameMode();
+	// printf("Application::update(): gamemode: %d", mode);
+	mStageManager->update();
+}
+void Application::pause()
+{
+	printf("Application::pause() is called !\n");
+	// GameData::getInstance()->saveData();
+	mStageManager->pause();
 }
 
 void Application::destroy()
 {
-	SceneManager::destroyInstance();
-	ResourceManager::destroyInstance();
+	// GameData::getInstance()->saveData();
+	printf("GameData is saved\n");
+	GameData::destroyInstance();
+
 	InputManager::destroyInstance();
+	StageManager::destroyInstance();
+	Camera2D::destroyInstance();
+	SoundManager::destroyInstance();
 	FileManager::destroyInstance();
 }
 
@@ -84,10 +106,30 @@ Application::~Application(void)
 {
 	destroy();
 }
+
+void Application::call_exit()
+{
+#if WIN32
+	// exit and destroy application
+	PostMessage(hWnd, WM_QUIT, 0, NULL);
+#elif ANDROID
+	//  com.gameover.androidport.MainActivity.exitApplication()
+	JNIEnv* env;
+	(jVM)->GetEnv((void**) &env, JNI_VERSION_1_6);
+
+	jclass classMainActivity = env->GetObjectClass(globalActivity);
+
+	jmethodID methodId = env->GetMethodID(classMainActivity, "exitApplication", "()V");
+	// call exit application in Android
+	env->CallVoidMethod(globalActivity, methodId);
+#endif
+}
+
 unsigned int Application::getScreenWidth()
 {
 	return mScreenWidth;
 }
+
 unsigned int Application::getScreenHeight()
 {
 	return mScreenHeight;
