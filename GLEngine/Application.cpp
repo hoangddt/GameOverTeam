@@ -51,14 +51,40 @@ void Application::init(unsigned int screenWidth, unsigned int screenHeight)
 #elif ANDROID
 	/*-----  Setting viewport  ------*/
 	glViewport(0, 0, screenWidth, screenHeight);
+	/*==========  Get path from Java  ==========*/
+
+	JNIEnv* env;
+	jclass classMainActivity;
+	jmethodID getPathId;
+
+	(jVM)->GetEnv((void**) &env, JNI_VERSION_1_6);
+	classMainActivity = (jclass) env->FindClass("com/gameover/androidport/MainActivity");
+	getPathId = env->GetStaticMethodID(classMainActivity, "getDataPath", "()Ljava/lang/String;");
+
+	jstring resultJNIStr = (jstring) env->CallStaticObjectMethod(classMainActivity, getPathId);
+/*
+	JNIEnv* env;
+	(jVM)->GetEnv((void**) &env, JNI_VERSION_1_6);
+
+	jclass classMainActivity = env->GetObjectClass(globalActivity);
+
+	jmethodID methodId = env->GetMethodID(classMainActivity, "getDataPath", "()Ljava/lang/String;");
 	
+	jstring resultJNIStr = (jstring) env->CallObjectMethod(classMainActivity, methodId);
+*/
+	jboolean iscopy;
+	const char *resultCStr = env->GetStringUTFChars(resultJNIStr, &iscopy);
+	
+	if (NULL == resultCStr)
+	{
+		printf("Application::init:66 Can't convert jstring to C++ string \n");
+	}
+	printf("In C, the returned string is %s\n", resultCStr);
+
 	/*-----  Setting resource path  ------*/
-	// For emulator
-	FileManager::getInstance()->init("/sdcard/Download/Resources");
-	// for inside phone memory : A QUang - A Hai
-	// FileManager::getInstance()->init("/storage/emulated/0/Download/Resources");
-	// for a Hoang
-	// FileManager::getInstance()->init("/storage/external_SD/Download/Resources");
+	FileManager::getInstance()->init(resultCStr);
+    printf("Goi init thanh cong\n");
+    env->ReleaseStringUTFChars(resultJNIStr, resultCStr);
 	
 #endif
 	InputManager::getInstance()->init();
@@ -78,20 +104,17 @@ void Application::render()
 
 void Application::update()
 {
-	// int mode = GameData::getInstance()->getGameMode();
-	// printf("Application::update(): gamemode: %d", mode);
 	mStageManager->update();
 }
 void Application::pause()
 {
-	printf("Application::pause() is called !\n");
-	// GameData::getInstance()->saveData();
 	mStageManager->pause();
 }
 
 void Application::destroy()
 {
-	// GameData::getInstance()->saveData();
+	
+	GameData::getInstance()->saveData();
 	printf("GameData is saved\n");
 	GameData::destroyInstance();
 
